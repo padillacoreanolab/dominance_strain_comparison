@@ -1,3 +1,17 @@
+# Repo Directories
+proc/
+bin/
+data/
+old/
+temp/
+*data*
+
+# Data Files
+*.mp4
+*.h264
+*.dat
+*.rec
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
