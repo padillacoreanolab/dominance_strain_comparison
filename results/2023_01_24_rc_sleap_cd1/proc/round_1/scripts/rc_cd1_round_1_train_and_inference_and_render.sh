@@ -2,7 +2,7 @@
 project_dir=/nancy/projects/dominance_strain_comparison/results/2023_01_24_rc_sleap_cd1/proc/round_1
 cd ${project_dir}
 
-sleap-train ${project_dir}/labeled_frames/rc_cd1_round_1_baseline_medium_rf_bottomup.json ${project_dir}/labeled_frames/cd1_combined_10-03-22.mp4.labeled.pkg.slp
+sleap-train ${project_dir}/labeled_frames/rc_cd1_round_1_baseline_medium_rf_bottomup.json ${project_dir}/labeled_frames/cd1_combined_10-03-22.mp4.labeled.pkg.pkg.slp
 model_directory=${project_dir}/models/rc_cd1_round_1_baseline_medium_rf_bottomup
 
 # Day 1
