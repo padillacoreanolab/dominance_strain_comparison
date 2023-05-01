@@ -1,0 +1,17 @@
+,subject_id,cage_num_of_subject,final_elo_rating,cohort,strain,experiment_type,rank
+0,1.1,1,1028.4,pilot_1,C57,urine_marking,1.0
+1,1.2,1,1010.5,pilot_1,C57,urine_marking,2.0
+2,1.3,1,953.9,pilot_1,C57,urine_marking,4.0
+3,1.4,1,1007.2,pilot_1,C57,urine_marking,3.0
+4,2.1,2,1037.2,pilot_1,C57,urine_marking,1.0
+5,2.2,2,962.8,pilot_1,C57,urine_marking,4.0
+6,2.3,2,999.4,pilot_1,C57,urine_marking,3.0
+7,2.4,2,1000.6,pilot_1,C57,urine_marking,2.0
+8,3.1,3,1020.5,pilot_1,CD1,urine_marking,1.0
+9,3.2,3,999.5,pilot_1,CD1,urine_marking,2.0
+10,3.3,3,987.8,pilot_1,CD1,urine_marking,4.0
+11,3.4,3,992.2,pilot_1,CD1,urine_marking,3.0
+12,4.1,4,1009.0,pilot_1,CD1,urine_marking,2.0
+13,4.2,4,971.0,pilot_1,CD1,urine_marking,3.0
+14,4.3,4,965.4,pilot_1,CD1,urine_marking,4.0
+15,4.4,4,1054.6,pilot_1,CD1,urine_marking,1.0
