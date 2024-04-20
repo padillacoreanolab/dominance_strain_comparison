@@ -119,17 +119,17 @@ def plotting_r_values(df_array, strain, type1, type2, input_directory):
                                 textcoords="offset points", ha='center', va='center',
                                 fontsize=0)
                 elif p_value_at_iloc <= 0.001:
-                    plt.annotate('***', xy=(j + 0.5, k + 0.5), xytext=(0, -25),
+                    plt.annotate('***', xy=(j + 0.5, k + 0.5), xytext=(0, 20),
                                 textcoords="offset points", ha='center', va='center',
-                                fontsize=20, color=colors)
+                                fontsize=24, color=colors)
                 elif p_value_at_iloc <= 0.01:
-                    plt.annotate('**', xy=(j + 0.5, k + 0.5), xytext=(0, -25),
+                    plt.annotate('**', xy=(j + 0.5, k + 0.5), xytext=(0, 20),
                                 textcoords="offset points", ha='center', va='center',
-                                fontsize=20, color=colors)
+                                fontsize=24, color=colors)
                 elif p_value_at_iloc <= 0.05:
-                    plt.annotate('*', xy=(j + 0.5, k + 0.5), xytext=(0, -25),
+                    plt.annotate('*', xy=(j + 0.5, k + 0.5), xytext=(0, 20),
                                 textcoords="offset points", ha='center', va='center',
-                                fontsize=20, color=colors)
+                                fontsize=28, color=colors)
         plt.tight_layout()
         heatmap1.get_figure().savefig(input_directory + "//" + strain[a] + "_" + type1 + "_r_value_heatmap.svg", format="svg")
         a += 1
@@ -185,23 +185,7 @@ def elo_p_value(df, input_directory):
             # custom_palette = sns.diverging_palette(240, 60, as_cmap=True, center="light")
         heatmap2 = sns.heatmap(df_numeric, annot=True, annot_kws={"size": 20}, cbar_kws={"label": "p-value"},
                             cmap=custom_palette, fmt=".4f", center=0, vmin=-0.7, vmax=0.7)
-        
-        # sig_levels = [(0.05, '*'), (0.01, '**'), (0.001, '***')]
-        # plt.text(j + 0.5, i + 0.5, symbol, horizontalalignment='center', verticalalignment='center')
-        """b = 0
-        for i in column_names:
-            c = 0
-            for j in column_names:
-                if i != j:
-                    p_value = df_numeric.loc[i, j]
-                    if p_value <= 0.001:
-                        plt.text(c + 0.85 , b + 0.35, '***', horizontalalignment='center', verticalalignment='center', fontsize=18)
-                    elif p_value <= 0.01:
-                        plt.text(c + 0.85, b + 0.35, '**', horizontalalignment='center', verticalalignment='center', fontsize=18)
-                    elif p_value <= 0.05:
-                        plt.text(c + 0.85, b + 0.35, '*', horizontalalignment='center', verticalalignment='center', fontsize=18)
-                c += 1
-            b += 1"""
+
         cbar = plt.gca().collections[0].colorbar
         cbar.set_label("p-value", fontsize=20)
         cbar.ax.tick_params(labelsize=20)
@@ -308,22 +292,7 @@ def p_value_calculation(df, input_directory):
         ]
         heatmap2 = sns.heatmap(df_numeric, annot=True, annot_kws={"size": 20}, cbar_kws={"label": "p-value"},
                             cmap=colors, fmt=".4f", center=0, vmin=-0.7, vmax=0.7)
-        #heatmap1 = sns.heatmap(df, annot=True, annot_kws={"size": 20}, cbar_kws={"label": "r-value"}, 
-        #                   cmap="vlag", fmt=".4f", center=0, vmin=-1, vmax=1)
-        """b = 0
-        for i in column_names:
-            c = 0
-            for j in column_names:
-                if i != j:
-                    p_value = df_numeric.loc[i, j]
-                    if p_value <= 0.001:
-                        plt.text(c + 0.85 , b + 0.35, '***', horizontalalignment='center', verticalalignment='center', fontsize=18)
-                    elif p_value <= 0.01:
-                        plt.text(c + 0.85, b + 0.35, '**', horizontalalignment='center', verticalalignment='center', fontsize=18)
-                    elif p_value <= 0.05:
-                        plt.text(c + 0.85, b + 0.35, '*', horizontalalignment='center', verticalalignment='center', fontsize=18)
-                c += 1
-            b += 1"""
+
         cbar = plt.gca().collections[0].colorbar
         cbar.set_label("p-value", fontsize=20)
         cbar.ax.tick_params(labelsize=20)
@@ -361,47 +330,6 @@ def p_value_calculation(df, input_directory):
         plt.tight_layout()
         heatmap2.get_figure().savefig(input_directory + "//" + strain[a] + "_ds_p_value_heatmap.svg")
         a += 1  
-
-"""def add_significance(input_directory):
-    files = os.listdir(input_directory)
-
-    def parse_svg_heatmap(svg_file):
-        tree = ET.parse(svg_file)
-        root = tree.getroot()
-        
-        # Example: Extracting data from SVG rectangles
-        data = []
-        for rect in root.findall(".//{http://www.w3.org/2000/svg}rect"):
-            x = float(rect.attrib.get("x"))
-            y = float(rect.attrib.get("y"))
-            width = float(rect.attrib.get("width"))
-            height = float(rect.attrib.get("height"))
-            value = float(rect.attrib.get("data-value"))  # Example: Extracting a data attribute
-            data.append({"x": x, "y": y, "width": width, "height": height, "value": value})
-        
-        # Create DataFrame from extracted data
-        df = pd.DataFrame(data)
-        return df
-    # Pair up files
-    file_pairs = list(combinations(files,2))
-    for pair in file_pairs:
-        # dataframe_pair = [None, None]
-        for file in pair:
-            if "p_value" in file: 
-                dataframe_p = parse_svg_heatmap(file)
-                # dataframe_pair[0] = dataframe_p
-            else:
-                dataframe_r = parse_svg_heatmap(file)
-                plt.plot(dataframe_r)
-                # dataframe_pair[1] = dataframe_r
-            for row in dataframe_p.values:
-                for value in row:
-                    if value <= 0.001:
-                        pass
-                    elif p_value <= 0.01:
-                        plt.text(c + 0.85, b + 0.35, '**', horizontalalignment='center', verticalalignment='center', fontsize=18)
-                    elif p_value <= 0.05:
-                        plt.text(c + 0.85, b + 0.35, '*', horizontalalignment='center', verticalalignment='center', fontsize=18)"""
 
 
 # obtain input directory with masterfile and plot all data
