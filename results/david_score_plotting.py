@@ -27,10 +27,28 @@ def plotting_r_values(df_array, strain, type1, type2, input_directory):
         i = i.filter(like=type1, axis=1)
         i.columns = i.columns.str.replace('_', ' ')
         i.columns = [col[:type2] for col in i.columns]
+        
+        # df gives the dataframe of r-values
         df = i.corr()
         df_rounded = df.round(4)
         df_rounded.index.name = ''
         df_rounded.to_excel(input_directory + '//' + strain[a] + '_' + type1 + '_r_value_matrix' + '.xlsx')
+        
+        # df_p_value gives dataframe of p-values
+        columns1 = []
+        column_names = list(i.columns)
+        columns1.extend(column_names)
+        p_value_df = pd.DataFrame(columns=columns1)
+        for n in column_names:
+            for m in column_names:    
+                valid_indices = ~np.isnan(i[n]) & ~np.isnan(i[m])
+                x = i[n][valid_indices]
+                y = i[m][valid_indices]
+                res = stats.pearsonr(x, y)
+                p_value_df.loc[n, m] = res[1]
+        df_p_value = p_value_df.apply(pd.to_numeric, errors='coerce')
+        df_p_value.index.name = ''
+
         plt.figure(figsize=(9.75, 7.5))
         plt.xticks(fontsize=20)
         plt.yticks(fontsize=20)
@@ -84,6 +102,34 @@ def plotting_r_values(df_array, strain, type1, type2, input_directory):
             y += 1
         heatmap1.set_xticklabels(final_xtick_labels)
         heatmap1.set_yticklabels(final_ytick_labels)
+
+        ax = heatmap1.axes
+        cell_text_colors = [text.get_color() for text in ax.texts]
+        for j in range(len(df_p_value.columns)):
+            for k in range(len(df_p_value.index)):
+                p_value_at_iloc = df_p_value.iloc[k, j]
+                # r_value_at_iloc = df.iloc[k, j]
+                colors = cell_text_colors.pop(0)
+                """if -0.2 <= r_value_at_iloc <= 0.2:
+                    colors = 'black'
+                else:
+                    colors = 'white'"""
+                if p_value_at_iloc <= 0.0001:
+                    plt.annotate('', xy=(j + 0.5, k + 0.5), xytext=(0, 0),
+                                textcoords="offset points", ha='center', va='center',
+                                fontsize=0)
+                elif p_value_at_iloc <= 0.001:
+                    plt.annotate('***', xy=(j + 0.5, k + 0.5), xytext=(0, -25),
+                                textcoords="offset points", ha='center', va='center',
+                                fontsize=20, color=colors)
+                elif p_value_at_iloc <= 0.01:
+                    plt.annotate('**', xy=(j + 0.5, k + 0.5), xytext=(0, -25),
+                                textcoords="offset points", ha='center', va='center',
+                                fontsize=20, color=colors)
+                elif p_value_at_iloc <= 0.05:
+                    plt.annotate('*', xy=(j + 0.5, k + 0.5), xytext=(0, -25),
+                                textcoords="offset points", ha='center', va='center',
+                                fontsize=20, color=colors)
         plt.tight_layout()
         heatmap1.get_figure().savefig(input_directory + "//" + strain[a] + "_" + type1 + "_r_value_heatmap.svg", format="svg")
         a += 1
@@ -122,6 +168,7 @@ def elo_p_value(df, input_directory):
                 res = stats.pearsonr(x, y)
                 p_value_df.loc[n, m] = res[1]
         df_numeric = p_value_df.apply(pd.to_numeric, errors='coerce')
+        # df_numeric.index.name = ''
         # creating a dataframe for p_value matrix for strain 2 
         # p_value_df = df_numeric.round(4)
         p_value_df.index.name = ''
@@ -356,74 +403,7 @@ def p_value_calculation(df, input_directory):
                     elif p_value <= 0.05:
                         plt.text(c + 0.85, b + 0.35, '*', horizontalalignment='center', verticalalignment='center', fontsize=18)"""
 
-def elo_r_value(input_directory):
-   # sorting and splitting the file by strain
-    split = split_by_strain(df)
-    strain = split[1]
-    df_array = split[0]
-    a = 0
-    for i in df_array:    
-        i = i.drop(columns='strain')
-        i = i.filter(like='ELO', axis=1)
-        i.columns = i.columns.str.replace('_', ' ')
-        i.columns = [col[:-4] for col in i.columns]
-        df = i.corr()
-        df_rounded = df.round(4)
-        df_rounded.index.name = ''
-        df_rounded.to_excel(input_directory + '//' + strain[a] + '_elo_r_value_matrix' + '.xlsx')
-        plt.figure(figsize=(9.75, 7.5))
-        plt.xticks(fontsize=20)
-        plt.yticks(fontsize=20)
-        if strain[a] == 'CD1':
-            custom_palette = sns.diverging_palette(50, 230, as_cmap=True, center="light", s=100, l=30)
-        if strain[a] == 'C57':
-            # Create the custom diverging palette
-            custom_palette = sns.diverging_palette(235, 55, n=7, as_cmap=True, center="light", s=100, l=70)
-            # custom_palette = sns.diverging_palette(240, 60, as_cmap=True, center="light")
-    
-        heatmap1 = sns.heatmap(df, annot=True, annot_kws={"size": 20}, cbar_kws={"label": "r-value"}, 
-                            cmap=custom_palette, fmt=".4f", center=0, vmin=-0.7, vmax=0.7)
-        # setting up the color bar
-        cbar = plt.gca().collections[0].colorbar
-        cbar.set_label("r-value", fontsize=22)
-        cbar.ax.tick_params(labelsize=20)
-        plt.xticks(rotation=0)
-        for tick in heatmap1.get_xticklabels():
-            tick.set_rotation(0)
-        plt.title(strain[a] + " David Score Correlation", fontsize=24, pad=24)
-        
-        # making changes to axis labels
-        current_xtick_labels = [tick.get_text() for tick in heatmap1.get_xticklabels()]
-        current_ytick_labels = [tick.get_text() for tick in heatmap1.get_yticklabels()]
-        new1_xtick_labels = [label if label != "Home cage" else "Agonistic behavior" for label in current_xtick_labels]
-        heatmap1.set_xticklabels(new1_xtick_labels)
-        new_xtick_labels = [label if label != "Reward competition" else "Reward comp" for label in new1_xtick_labels]
-        # Set the new tick labels for the x-axis
-        heatmap1.set_xticklabels(new_xtick_labels)
-        new1_ytick_labels = [label if label != "Home cage" else "Agonistic behavior" for label in current_ytick_labels]
-        heatmap1.set_yticklabels(new1_ytick_labels)
-        new_ytick_labels = [label if label != "Reward competition" else "Reward comp" for label in new1_ytick_labels]
-        # Set the new tick labels for the y-axis
-        heatmap1.set_yticklabels(new_ytick_labels)
-        final_xtick_labels = [tick.get_text() for tick in heatmap1.get_xticklabels()]
-        final_ytick_labels = [tick.get_text() for tick in heatmap1.get_yticklabels()]
-        x = 0
-        for labels in new_xtick_labels:
-            if len(labels.split()) > 1:
-                result = '\n'.join(labels.split())
-                final_xtick_labels[x] = result
-            x += 1
-        y = 0
-        for labels in new_ytick_labels:
-            if len(labels.split()) > 1:
-                result = '\n'.join(labels.split())
-                final_ytick_labels[y] = result
-            y += 1
-        heatmap1.set_xticklabels(final_xtick_labels)
-        heatmap1.set_yticklabels(final_ytick_labels)
-        plt.tight_layout()
-        heatmap1.get_figure().savefig(input_directory + "//" + strain[a] + "_ds_r_value_heatmap.svg", format="svg")
-        a += 1  
+
 # obtain input directory with masterfile and plot all data
 input_directory = input("directory from David Score calculation: ")
 filename = "Master_file.csv"
@@ -432,7 +412,6 @@ final_df = pd.read_csv(file_path, header=0)
 ds_pearson_correlation(final_df, input_directory)
 p_value_calculation(final_df, input_directory)
 elo_pearson_correlation(final_df, input_directory)
-# elo_r_value(final_df, input_directory)
 elo_p_value(final_df, input_directory)
 
 # combining files for a master correlation matrix file
