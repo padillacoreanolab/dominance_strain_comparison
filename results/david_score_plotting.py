@@ -30,9 +30,9 @@ def plotting_r_values(df_array, strain, type1, type2, input_directory):
         
         # df gives the dataframe of r-values
         df = i.corr()
-        df_rounded = df.round(4)
-        df_rounded.index.name = ''
-        df_rounded.to_excel(input_directory + '//' + strain[a] + '_' + type1 + '_r_value_matrix' + '.xlsx')
+        df = df.round(4)
+        df.index.name = ''
+        df.to_excel(input_directory + '//' + strain[a] + '_' + type1 + '_r_value_matrix' + '.xlsx')
         
         # df_p_value gives dataframe of p-values
         columns1 = []
@@ -59,8 +59,8 @@ def plotting_r_values(df_array, strain, type1, type2, input_directory):
             custom_palette = sns.diverging_palette(235, 55, n=7, as_cmap=True, center="light", s=100, l=70)
             # custom_palette = sns.diverging_palette(240, 60, as_cmap=True, center="light")
     
-        heatmap1 = sns.heatmap(df, annot=True, annot_kws={"size": 20}, cbar_kws={"label": "r-value"}, 
-                            cmap=custom_palette, fmt=".4f", center=0, vmin=-0.7, vmax=0.7)
+        heatmap1 = sns.heatmap(df, annot=True, annot_kws={"size": 24}, cbar_kws={"label": "r-value"}, 
+                            cmap=custom_palette, fmt=".3f", center=0, vmin=-0.7, vmax=0.7)
         # setting up the color bar
         cbar = plt.gca().collections[0].colorbar
         cbar.set_label("r-value", fontsize=22)
@@ -121,11 +121,11 @@ def plotting_r_values(df_array, strain, type1, type2, input_directory):
                 elif p_value_at_iloc <= 0.001:
                     plt.annotate('***', xy=(j + 0.5, k + 0.5), xytext=(0, 20),
                                 textcoords="offset points", ha='center', va='center',
-                                fontsize=24, color=colors)
+                                fontsize=28, color=colors)
                 elif p_value_at_iloc <= 0.01:
                     plt.annotate('**', xy=(j + 0.5, k + 0.5), xytext=(0, 20),
                                 textcoords="offset points", ha='center', va='center',
-                                fontsize=24, color=colors)
+                                fontsize=28, color=colors)
                 elif p_value_at_iloc <= 0.05:
                     plt.annotate('*', xy=(j + 0.5, k + 0.5), xytext=(0, 20),
                                 textcoords="offset points", ha='center', va='center',
