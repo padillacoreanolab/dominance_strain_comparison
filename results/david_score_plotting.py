@@ -5,9 +5,9 @@ import numpy as np
 from scipy import stats
 import seaborn as sns
 import matplotlib.pyplot as plt
-import matplotlib as mpl
-from itertools import combinations
-import xml.etree.ElementTree as ET
+# import matplotlib as mpl
+# from itertools import combinations
+# import xml.etree.ElementTree as ET
 
 def split_by_strain(df):
     df = df.sort_values(by='strain')
@@ -20,45 +20,42 @@ def split_by_strain(df):
     strain = [strain1, strain2]
     return df_array, strain
 
-# function for the r-value correlation matrix for elo rating
-def elo_pearson_correlation(df, input_directory):
-    # sorting and splitting the file by strain
-    split = split_by_strain(df)
-    strain = split[1]
-    df_array = split[0]
-    a = 0
-    # making files 
+def plotting_r_values(df_array, strain, type1, type2, input_directory):
+    a=0
     for i in df_array:    
         i = i.drop(columns='strain')
-        i = i.filter(like='ELO', axis=1)
+        i = i.filter(like=type1, axis=1)
         i.columns = i.columns.str.replace('_', ' ')
-        i.columns = [col[:-4] for col in i.columns]
+        i.columns = [col[:type2] for col in i.columns]
         df = i.corr()
         df_rounded = df.round(4)
         df_rounded.index.name = ''
-        df_rounded.to_excel(input_directory + '//' + strain[a] + '_elo_r_value_matrix' + '.xlsx')
-        
-        # initializing plot size and font size
+        df_rounded.to_excel(input_directory + '//' + strain[a] + '_' + type1 + '_r_value_matrix' + '.xlsx')
         plt.figure(figsize=(9.75, 7.5))
         plt.xticks(fontsize=20)
         plt.yticks(fontsize=20)
-        # Create the custom diverging palette
         if strain[a] == 'CD1':
             custom_palette = sns.diverging_palette(50, 230, as_cmap=True, center="light", s=100, l=30)
         if strain[a] == 'C57':
+            # Create the custom diverging palette
             custom_palette = sns.diverging_palette(235, 55, n=7, as_cmap=True, center="light", s=100, l=70)
+            # custom_palette = sns.diverging_palette(240, 60, as_cmap=True, center="light")
+    
         heatmap1 = sns.heatmap(df, annot=True, annot_kws={"size": 20}, cbar_kws={"label": "r-value"}, 
                             cmap=custom_palette, fmt=".4f", center=0, vmin=-0.7, vmax=0.7)
+        # setting up the color bar
         cbar = plt.gca().collections[0].colorbar
         cbar.set_label("r-value", fontsize=22)
         cbar.ax.tick_params(labelsize=20)
         plt.xticks(rotation=0)
         for tick in heatmap1.get_xticklabels():
             tick.set_rotation(0)
-
-        plt.title(strain[a] + " Dominance score correlation", fontsize=24, pad=24)
+        if type1 == 'DS':
+            plt.title(strain[a] + " David score correlation", fontsize=24, pad=24)
+        if type1 == 'ELO':
+            plt.title(strain[a] + " Dominance score correlation", fontsize=24, pad=24)
         
-        # setting axis labels
+        # making changes to axis labels
         current_xtick_labels = [tick.get_text() for tick in heatmap1.get_xticklabels()]
         current_ytick_labels = [tick.get_text() for tick in heatmap1.get_yticklabels()]
         new1_xtick_labels = [label if label != "Home cage" else "Agonistic behavior" for label in current_xtick_labels]
@@ -73,8 +70,6 @@ def elo_pearson_correlation(df, input_directory):
         heatmap1.set_yticklabels(new_ytick_labels)
         final_xtick_labels = [tick.get_text() for tick in heatmap1.get_xticklabels()]
         final_ytick_labels = [tick.get_text() for tick in heatmap1.get_yticklabels()]
-        
-        # splitting axis labels so they are in two lines
         x = 0
         for labels in new_xtick_labels:
             if len(labels.split()) > 1:
@@ -90,8 +85,16 @@ def elo_pearson_correlation(df, input_directory):
         heatmap1.set_xticklabels(final_xtick_labels)
         heatmap1.set_yticklabels(final_ytick_labels)
         plt.tight_layout()
-        heatmap1.get_figure().savefig(input_directory + "//" + strain[a] + "_elo_r_value_heatmap.svg", format="svg")
+        heatmap1.get_figure().savefig(input_directory + "//" + strain[a] + "_" + type1 + "_r_value_heatmap.svg", format="svg")
         a += 1
+
+# function for the r-value correlation matrix for elo rating
+def elo_pearson_correlation(df, input_directory):
+    # sorting and splitting the file by strain
+    split = split_by_strain(df)
+    strain = split[1]
+    df_array = split[0]
+    plotting_r_values(df_array, strain, 'ELO', -4, input_directory)
 
 # p-value matrix for elo rating
 def elo_p_value(df, input_directory):
@@ -198,70 +201,7 @@ def ds_pearson_correlation(df, input_directory):
     split = split_by_strain(df)
     strain = split[1]
     df_array = split[0]
-    
-    a = 0
-    for i in df_array:    
-        i = i.drop(columns='strain')
-        i = i.filter(like='DS', axis=1)
-        i.columns = i.columns.str.replace('_', ' ')
-        i.columns = [col[:-3] for col in i.columns]
-        df = i.corr()
-        df_rounded = df.round(4)
-        df_rounded.index.name = ''
-        df_rounded.to_excel(input_directory + '//' + strain[a] + '_ds_r_value_matrix' + '.xlsx')
-        plt.figure(figsize=(9.75, 7.5))
-        plt.xticks(fontsize=20)
-        plt.yticks(fontsize=20)
-        if strain[a] == 'CD1':
-            custom_palette = sns.diverging_palette(50, 230, as_cmap=True, center="light", s=100, l=30)
-        if strain[a] == 'C57':
-            # Create the custom diverging palette
-            custom_palette = sns.diverging_palette(235, 55, n=7, as_cmap=True, center="light", s=100, l=70)
-            # custom_palette = sns.diverging_palette(240, 60, as_cmap=True, center="light")
-    
-        heatmap1 = sns.heatmap(df, annot=True, annot_kws={"size": 20}, cbar_kws={"label": "r-value"}, 
-                            cmap=custom_palette, fmt=".4f", center=0, vmin=-0.7, vmax=0.7)
-        # setting up the color bar
-        cbar = plt.gca().collections[0].colorbar
-        cbar.set_label("r-value", fontsize=22)
-        cbar.ax.tick_params(labelsize=20)
-        plt.xticks(rotation=0)
-        for tick in heatmap1.get_xticklabels():
-            tick.set_rotation(0)
-        plt.title(strain[a] + " David Score Correlation", fontsize=24, pad=24)
-        
-        # making changes to axis labels
-        current_xtick_labels = [tick.get_text() for tick in heatmap1.get_xticklabels()]
-        current_ytick_labels = [tick.get_text() for tick in heatmap1.get_yticklabels()]
-        new1_xtick_labels = [label if label != "Home cage" else "Agonistic behavior" for label in current_xtick_labels]
-        heatmap1.set_xticklabels(new1_xtick_labels)
-        new_xtick_labels = [label if label != "Reward competition" else "Reward comp" for label in new1_xtick_labels]
-        # Set the new tick labels for the x-axis
-        heatmap1.set_xticklabels(new_xtick_labels)
-        new1_ytick_labels = [label if label != "Home cage" else "Agonistic behavior" for label in current_ytick_labels]
-        heatmap1.set_yticklabels(new1_ytick_labels)
-        new_ytick_labels = [label if label != "Reward competition" else "Reward comp" for label in new1_ytick_labels]
-        # Set the new tick labels for the y-axis
-        heatmap1.set_yticklabels(new_ytick_labels)
-        final_xtick_labels = [tick.get_text() for tick in heatmap1.get_xticklabels()]
-        final_ytick_labels = [tick.get_text() for tick in heatmap1.get_yticklabels()]
-        x = 0
-        for labels in new_xtick_labels:
-            if len(labels.split()) > 1:
-                result = '\n'.join(labels.split())
-                final_xtick_labels[x] = result
-            x += 1
-        y = 0
-        for labels in new_ytick_labels:
-            if len(labels.split()) > 1:
-                result = '\n'.join(labels.split())
-                final_ytick_labels[y] = result
-            y += 1
-        heatmap1.set_xticklabels(final_xtick_labels)
-        heatmap1.set_yticklabels(final_ytick_labels)
-        plt.tight_layout()
-        heatmap1.get_figure().savefig(input_directory + "//" + strain[a] + "_ds_r_value_heatmap.svg", format="svg")
-        a += 1    
+    plotting_r_values(df_array, strain, 'DS', -3, input_directory)
 
 # code currently only accounts for 2 strains need to update
 def p_value_calculation(df, input_directory):
@@ -416,22 +356,21 @@ def p_value_calculation(df, input_directory):
                     elif p_value <= 0.05:
                         plt.text(c + 0.85, b + 0.35, '*', horizontalalignment='center', verticalalignment='center', fontsize=18)"""
 
-def elo_r_value(df, input_directory):
-        # sorting and splitting the file by strain
+def elo_r_value(input_directory):
+   # sorting and splitting the file by strain
     split = split_by_strain(df)
     strain = split[1]
     df_array = split[0]
-    
     a = 0
     for i in df_array:    
         i = i.drop(columns='strain')
-        i = i.filter(like='DS', axis=1)
+        i = i.filter(like='ELO', axis=1)
         i.columns = i.columns.str.replace('_', ' ')
-        i.columns = [col[:-3] for col in i.columns]
+        i.columns = [col[:-4] for col in i.columns]
         df = i.corr()
         df_rounded = df.round(4)
         df_rounded.index.name = ''
-        df_rounded.to_excel(input_directory + '//' + strain[a] + '_ds_r_value_matrix' + '.xlsx')
+        df_rounded.to_excel(input_directory + '//' + strain[a] + '_elo_r_value_matrix' + '.xlsx')
         plt.figure(figsize=(9.75, 7.5))
         plt.xticks(fontsize=20)
         plt.yticks(fontsize=20)
@@ -484,11 +423,7 @@ def elo_r_value(df, input_directory):
         heatmap1.set_yticklabels(final_ytick_labels)
         plt.tight_layout()
         heatmap1.get_figure().savefig(input_directory + "//" + strain[a] + "_ds_r_value_heatmap.svg", format="svg")
-        a += 1    
-
-    
-    
-
+        a += 1  
 # obtain input directory with masterfile and plot all data
 input_directory = input("directory from David Score calculation: ")
 filename = "Master_file.csv"
@@ -497,6 +432,7 @@ final_df = pd.read_csv(file_path, header=0)
 ds_pearson_correlation(final_df, input_directory)
 p_value_calculation(final_df, input_directory)
 elo_pearson_correlation(final_df, input_directory)
+# elo_r_value(final_df, input_directory)
 elo_p_value(final_df, input_directory)
 
 # combining files for a master correlation matrix file
