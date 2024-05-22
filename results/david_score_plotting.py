@@ -62,16 +62,20 @@ def plotting_r_values(df_array, strain, type1, type2, input_directory):
         heatmap1 = sns.heatmap(df, annot=True, annot_kws={"size": 24}, cbar_kws={"label": "r-value"}, 
                             cmap=custom_palette, fmt=".3f", center=0, vmin=-0.7, vmax=0.7)
         # setting up the color bar
+        for text in heatmap1.texts:
+            text.set_fontweight('bold')
         cbar = plt.gca().collections[0].colorbar
-        cbar.set_label("r-value", fontsize=22)
+        cbar.set_label("r-value", fontsize=22, fontweight='bold')
         cbar.ax.tick_params(labelsize=20)
+        for label in cbar.ax.get_yticklabels():
+            label.set_fontweight('bold')
         plt.xticks(rotation=0)
         for tick in heatmap1.get_xticklabels():
             tick.set_rotation(0)
         if type1 == 'DS':
-            plt.title(strain[a] + " David score correlation", fontsize=24, pad=24)
+            plt.title(strain[a] + " David score correlation", fontsize=24, pad=24, fontweight='bold')
         if type1 == 'ELO':
-            plt.title(strain[a] + " Dominance score correlation", fontsize=24, pad=24)
+            plt.title(strain[a] + " Dominance score correlation", fontsize=24, pad=24, fontweight='bold')
         
         # making changes to axis labels
         current_xtick_labels = [tick.get_text() for tick in heatmap1.get_xticklabels()]
@@ -100,8 +104,8 @@ def plotting_r_values(df_array, strain, type1, type2, input_directory):
                 result = '\n'.join(labels.split())
                 final_ytick_labels[y] = result
             y += 1
-        heatmap1.set_xticklabels(final_xtick_labels)
-        heatmap1.set_yticklabels(final_ytick_labels)
+        heatmap1.set_xticklabels(final_xtick_labels, fontweight='bold')
+        heatmap1.set_yticklabels(final_ytick_labels, fontweight='bold')
 
         ax = heatmap1.axes
         cell_text_colors = [text.get_color() for text in ax.texts]
