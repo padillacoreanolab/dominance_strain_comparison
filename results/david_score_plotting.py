@@ -125,15 +125,15 @@ def plotting_r_values(df_array, strain, type1, type2, input_directory):
                 elif p_value_at_iloc <= 0.001:
                     plt.annotate('***', xy=(j + 0.5, k + 0.5), xytext=(0, 20),
                                 textcoords="offset points", ha='center', va='center',
-                                fontsize=28, color=colors)
+                                fontsize=28, color=colors, fontweight='bold')
                 elif p_value_at_iloc <= 0.01:
                     plt.annotate('**', xy=(j + 0.5, k + 0.5), xytext=(0, 20),
                                 textcoords="offset points", ha='center', va='center',
-                                fontsize=28, color=colors)
+                                fontsize=28, color=colors, fontweight='bold')
                 elif p_value_at_iloc <= 0.05:
                     plt.annotate('*', xy=(j + 0.5, k + 0.5), xytext=(0, 20),
                                 textcoords="offset points", ha='center', va='center',
-                                fontsize=28, color=colors)
+                                fontsize=28, color=colors, fontweight='bold')
         plt.tight_layout()
         heatmap1.get_figure().savefig(input_directory + "//" + strain[a] + "_" + type1 + "_r_value_heatmap.svg", format="svg")
         a += 1

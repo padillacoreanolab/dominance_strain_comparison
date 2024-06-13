@@ -128,6 +128,10 @@ def urine_tube(df):
     # Remove unneeded columns
     to_keep = ['winner', 'loser']
     df = df[to_keep]
+    df['winner'] = df['winner'].astype(str).str.strip()
+    df['loser'] = df['loser'].astype(str).str.strip()
+    df['winner'] = df['winner'].astype(float)
+    df['loser'] = df['loser'].astype(float)
 
     # insure only valid mouse id'd mice are allowed
     df.loc[df['winner'] == 0.0, 'winner'] = np.nan
