@@ -1,0 +1,228 @@
+---
+title: "glm_stats"
+author: "Meghan Cum"
+date: "2024-03-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidymodels)
+library(lme4)
+library(lmerTest)
+library(emmeans)
+library(Matrix)
+library(dabestr)
+library(MuMIn)
+library(effsize)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+boris_tubetest <- readxl::read_excel('./data/Boris_Data_final.xlsx')
+
+boris_tubetest <- boris_tubetest |>
+  rowwise()|>
+  mutate(Outcome = if_else(`Is winner` == TRUE,
+                           "winner",
+                           "loser"),
+         cage = as_factor(str_c(unlist(strsplit(`Subject`, "\\."))[1],
+           unlist(strsplit(`Subject`, "\\."))[2])),
+         resist_percent = `Resist % Time`,
+         log_resist = log(resist_percent + 1),
+         push_percent = `Push % Time`,
+         log_push = log(push_percent + 1),
+         rec_push = 1/(push_percent + 1),
+         passive_retreat_percent = `Retreat (passive) % Time`,
+         log_passive_retreat = log(passive_retreat_percent + 1),
+         retreat_percent = `Retreat (in contact) % Time`,
+         log_retreat = log(retreat_percent + 1),
+         Day = as_factor(Day),
+         Pilot = as_factor(Pilot),
+         Subject = as_factor(Subject),
+         Scorer = as_factor(Scorer),
+         Outcome = as_factor(Outcome)
+  ) |>
+  select(-`Winner ID`, -`Winner Rank`, -`Loser ID`)
+
+boris_tubetest |> 
+  group_by(Subject) |> 
+  summarize(n=n())
+
+```
+
+```{r}
+ggplot(boris_tubetest, aes(x = retreat_percent, fill = Outcome)) +
+  geom_histogram()
+
+ggplot(boris_tubetest, aes(x = retreat_percent, fill = Outcome)) +
+  geom_histogram() + 
+  facet_wrap(~Subject) 
+
+
+ggplot(boris_tubetest, aes(x = push_percent, fill = Outcome)) +
+  geom_histogram() + 
+  facet_wrap(~Scorer) 
+
+ggplot(boris_tubetest, aes( y = push_percent, x = Strain, fill = Strain))+
+  stat_summary()
+
+ggplot(boris_tubetest, aes( y = push_percent, x = Outcome, fill = Outcome))+
+  geom_violin() + 
+  stat_summary()
+```
+
+```{r pressure, echo=FALSE}
+
+#add cage 
+#push_model <- lmer(push_percent ~ Outcome + Strain + (1|Scorer) + (cage|Subject), boris_tubetest)
+push_model <- lmer(push_percent ~ Outcome + Strain + (1|Subject) + (1|Scorer), boris_tubetest)
+push_model3 <- lmer(push_percent ~ Outcome + Strain + (1|Subject) + (1|Scorer) +(1|cage), boris_tubetest)
+print('summary')
+summary(push_model)
+print('anova')
+anova(push_model)
+print('r anova')
+ranova(push_model)
+
+emm_push <- emmeans(push_model, ~ Outcome | Strain)
+emm_push2 <- emmeans(push_model, ~ Strain | Outcome)
+ttest_push <- contrast(emm_push, simple = 'each', method = 'pairwise', adjust = 'holm')
+
+effect_size <- eff_size(emm_push, sigma = sqrt(mean(sigma(push_model)^2)), edf = df.residual(push_model))
+effect_size2 <- eff_size(emm_push, sigma = sd(residuals(push_model)), edf = df.residual(push_model))
+
+#effect_size2 <- eff_size(emm_push2, sigma = sd(residuals(push_model)), edf = df.residual(push_model))
+summary(effect_size)
+summary(effect_size2)
+tester <- load(boris_tubetest, 
+     x = Strain,
+     y = push_percent,
+     idx = c("C57", "CD1"),
+     paired = "baseline",
+     id_col = Subject
+     )
+
+#hedges_g(tester)
+#cohens_d(tester)
+
+
+qqnorm(residuals(push_model))
+qqline(residuals(push_model))
+
+```
+
+```{r}
+push_model4 <- lmer(rec_push ~ Outcome + Strain + (1|Subject) + (1|Scorer), boris_tubetest)
+push_model5 <- lmer(log_push ~ Outcome + Strain + (1|Subject) + (1|Scorer), boris_tubetest)
+
+print('summary')
+summary(push_model4)
+print('anova')
+anova(push_model4)
+print('r anova')
+ranova(push_model4)
+r.squaredGLMM(push_model)
+r.squaredGLMM(push_model4)
+r.squaredGLMM(push_model5)
+emm_push <- emmeans(push_model4, ~ Outcome | Strain)
+ttest_push <- contrast(emm_push, simple = 'each', method = 'pairwise', adjust = 'holm')
+
+ttest_push
+
+tester <- load(boris_tubetest,
+     x = Strain,
+     y = log_push,
+     idx = c("C57", "CD1"),
+     paired = "baseline",
+     id_col = Subject
+     )
+
+# hedges_g(tester)
+# cohens_d(tester)
+# qqnorm(residuals(push_model4))
+# qqline(residuals(push_model4))
+# 
+# qqnorm(residuals(push_model5))
+# qqline(residuals(push_model5))
+# 
+# qqnorm(residuals(push_model))
+# qqline(residuals(push_model))
+```
+
+
+
+```{r}
+resist_model <- lmer(resist_percent ~ Outcome + Strain  + (1|Subject) + (1|Scorer), boris_tubetest)
+
+summary(resist_model)
+anova(resist_model)
+ranova(resist_model)
+
+
+emm_resist <- emmeans(resist_model, ~ Outcome | Strain)
+ttest_resist <- contrast(emm_resist, simple = 'each', method = 'pairwise', adjust = 'holm')
+ttest_resist
+```
+
+
+
+
+
+```{r}
+retreat_model <- lmer(retreat_percent ~ Outcome + Strain + (1|Subject), boris_tubetest)
+summary(retreat_model)
+anova(retreat_model)
+ranova(retreat_model)
+
+
+emm_retreat <- emmeans(retreat_model, ~ Outcome | Strain)
+ttest_retreat <- contrast(emm_retreat, simple = 'each', method = 'pairwise', adjust = 'holm')
+ttest_retreat
+```
+
+
+
+```{r}
+
+passive_retreat_model <- lmer(passive_retreat_percent ~ Outcome + Strain + (1|Subject) + (1|Scorer), boris_tubetest)
+
+summary(passive_retreat_model)
+anova(passive_retreat_model)
+ranova(passive_retreat_model)
+drop1(passive_retreat_model)
+
+emm_passive<- emmeans(passive_retreat_model, ~ Outcome | Strain)
+ttest_passive <- contrast(emm_passive, simple = 'each', method = 'pairwise', adjust = 'holm')
+
+ttest_passive
+```
+```{r}
+match_df <- boris_tubetest |> 
+  mutate(pilot_match = paste(Pilot, Match, sep = " ")) |>
+  group_by(observation_ID) |>
+   slice(seq(1, n(), by = 2)) %>%  # Select every other row within each group
+  summarize(Strain = first(Strain),
+            match = first(pilot_match),# Take the first value of Strain within each group
+            `Trial Length` = mean(`Trial Length`),
+            )
+
+trial_length_model <- lm(`Trial Length` ~ Strain, match_df)
+
+
+summary(trial_length_model)
+anova(trial_length_model)
+#ranova(trial_length_model)
+drop1(trial_length_model)
+
+emm_length<- emmeans(trial_length_model, ~ Strain)
+ttest_length <- contrast(emm_length, simple = 'each', method = 'pairwise', adjust = 'holm')
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

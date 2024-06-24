@@ -1,0 +1,134 @@
+---
+title: "urine_marking_lmer"
+author: "Meghan Cum"
+date: "2024-04-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidymodels)
+library(lme4)
+library(lmerTest)
+library(emmeans)
+library(Matrix)
+library(dabestr)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+urine_marking <- readxl::read_excel('./data/formatted_urm_spots.xlsx')
+urine_marking <- urine_marking |>
+  rowwise() |>
+  mutate(cohort = as_factor(cohort),
+         agent_strain = as_factor(agent_strain),
+         winner = as_factor(winner),
+         loser = as_factor(loser),
+         subject = paste(sub("pilot_", "", cohort), subject_id, sep = "."),
+         agent = paste(sub("pilot_", "", cohort), agent_id, sep = "."),
+         cage = as_factor(str_c(unlist(strsplit(`subject`, "\\."))[1],
+           unlist(strsplit(`subject`, "\\."))[2])),
+         outcome = as_factor(outcome)) |>
+  select(-c(sheet_name, notes, ...1, index,
+            original_elo_rating, 
+            updated_elo_rating,
+            date,
+            experiment_type, 
+            left_number_of_spots,
+            right_number_of_spots,
+            processed_cage_num_of_loser,
+            processed_cage_num_of_winner,
+            cage_num_of_subject, 
+            adjusted_pee_spot_difference,
+            adjusted_winner_number_of_spots,
+            adjusted_loser_number_of_spots,
+            cage_num_of_agent,
+            session_number_difference,
+            cohort))
+urine_marking
+         
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+
+pee_model0 <- lmer(subject_spots ~ pairing_index * agent_strain + (1|subject), urine_marking)
+#pee_model1 <- lmer(subject_spots ~ pairing_index * agent_strain + (1|subject) + (1|cage), urine_marking)
+#pee_model2 <- lmer(subject_spots ~ pairing_index * agent_strain + (1|subject) + (1|cage) + (1|agent), urine_marking)
+#pee_model3 <- lmer(subject_spots ~ pairing_index * agent_strain + (1|subject) + (1|agent), urine_marking)
+
+print('summary')
+summary(pee_model0)
+print('anova')
+#pee_anova <- anova(pee_model0, pee_model1, pee_model2, pee_model3)
+print('r anova')
+ranova(pee_model0)
+#pee_anova
+
+anova(pee_model0)
+emm_pee <- emmeans(pee_model0, ~ pairing_index | agent_strain)
+ttest_pee <- contrast(emm_pee, simple = 'each', method = 'pairwise', combine = T, adjust = 'holm')
+
+ttest_pee
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+urine_marking |>
+  group_by(subject_strain) |>
+  summarise(n= n())
+
+tester <- load(urine_marking, 
+     x = subject_strain,
+     y = subject_spots,
+     idx = c("C57", "CD1"),
+     paired = "baseline",
+     id_col = subject_id
+     )
+
+hedges_g(tester)
+```
+
+```{r}
+reward_comp <- readxl::read_excel('./data/master_df_reward_comp.xlsx')
+
+reward_comp <- reward_comp |>
+  mutate(Subject = as_factor(Subject),
+         Strain = as_factor(Strain),
+         Outcome = as_factor(Outcome),
+         Opponent = as_factor(Opponent),
+         Pilot = as_factor(Pilot),
+         Cage_Unique = as_factor(`Cage Unique`))
+str(reward_comp)
+          
+```
+```{r}
+comp_model0 <- lmer(`% wins` ~ Outcome * Strain + (1|Subject), reward_comp)
+#comp_model1 <- lmer(`% wins` ~ Outcome * Strain + (1|Subject) + (1|Cage_Unique), reward_comp)
+#comp_model2 <- lmer(`% wins` ~ Outcome * Strain + (1|Subject) + (1|Cage_Unique) + (1|Opponent), reward_comp)
+comp_model3 <- lmer(`% wins` ~ Outcome * Strain + (1|Subject) + (1|Opponent), reward_comp)
+comp_model4 <- lmer(`% wins` ~ Outcome + Strain + (1|Subject), reward_comp)
+
+print('anova')
+comp_anova <- anova(comp_model0, comp_model3, comp_model4)
+print('r anova')
+ranova(comp_model0)
+comp_anova
+anova(comp_model0)
+
+anova(comp_model0)
+emm_comp <- emmeans(comp_model0, ~ Outcome | Strain)
+ttest_comp <- contrast(emm_comp, simple = 'each', method = 'pairwise', combine = T, adjust = 'holm')
+
+ttest_comp
+```
+

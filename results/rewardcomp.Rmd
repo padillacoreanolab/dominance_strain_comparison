@@ -1,0 +1,81 @@
+---
+title: "rewardcomp"
+author: "Meghan Cum"
+date: "2024-04-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidymodels)
+library(lme4)
+library(lmerTest)
+library(emmeans)
+library(Matrix)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+rewardcomp_raw <- read.csv("C:/Users/megha/Documents/GitHub/pose_tracking_repo/results/tube_test_analysis/rewardcomp_cluster_df.csv")
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+str(rewardcomp)
+rewardcomp <- rewardcomp_raw |>
+  mutate(Strain = as_factor(Strain),
+         Recording = as_factor(Recording),
+         tube_test_elo = as_factor(tube_test_elo),
+         reward_comp_elo = as_factor(reward_comp_elo),
+         home_cage_observation_elo = as_factor(home_cage_observation_elo),
+         urine_marking_elo = as_factor(urine_marking_elo),
+         raw_kmeans_labels_zscore = as_factor(raw_kmeans_labels_zscore)) |>
+  select(-standard_kmeans_labels_zscore, -standard_hdbscan_labels_zscore, -raw_hdbscan_labels_zscore)
+str(rewardcomp)
+
+
+```
+```{r}
+percent_cluster <- rewardcomp |> 
+  group_by(Recording, raw_kmeans_labels_zscore)  |>
+  mutate(n = n()) |> 
+  summarize(Recording, n)
+
+percent_cluster
+```
+
+```{r}
+
+cluster_model <- lmer(raw_kmeans_labels_zscore ~ Strain * trial_indice + (1|Recording), rewardcomp)
+cluster_model2 <- lmer(raw_kmeans_labels_zscore ~ Strain * 
+                         trial_indice * 
+                         tube_test_elo * 
+                         reward_comp_elo * 
+                         home_cage_observation_elo *
+                         urine_marking_elo + 
+                         (1|Recording), rewardcomp)
+
+
+print('summary')
+summary(cluster_model)
+print('anova')
+anova(cluster_model, cluster_model2)
+print('r anova')
+ranova(cluster_model)
+
+# emm_push <- emmeans(push_model, ~ Outcome | Strain)
+# ttest_push <- contrast(emm_push, simple = 'each', method = 'pairwise', adjust = 'holm')
+# 
+# ttest_push
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

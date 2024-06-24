@@ -1,0 +1,276 @@
+---
+title: "linearity"
+author: "Meghan Cum"
+date: "2024-04-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+devtools::install_github('jalapic/compete')
+library(compete)
+library(tidyverse)
+library(patchwork)
+library(openxlsx)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+um <- readxl::read_excel("C:/Users/megha/Documents/GitHub/pose_tracking_repo/results/tube_test_analysis/linearity_matrices.xlsx", sheet = "UM")
+
+um_linearity <- um |>
+  rowwise() |>
+  mutate(pilot = as_factor(unlist(strsplit(`...1`, "\\."))[1]),
+         cage = as_factor(unlist(strsplit(`...1`, "\\."))[2]),
+         strain = case_when((pilot == 1 ) & ((cage == 1) | (cage == 2)) ~ "C57",
+                            (pilot == 1 ) & ((cage == 3) | (cage == 4)) ~ "CD1",
+                            (pilot !=  1) & ((cage == 1) | (cage == 2) | (cage == 3)) ~ "C57",
+                            (pilot !=  1) & ((cage == 4) | (cage == 5) | (cage == 6)) ~ "CD1"
+                            )) |>
+  column_to_rownames(var = '...1') |>
+  group_by(strain, pilot, cage) |>
+  nest() |>
+  mutate(dci = 0)
+
+  
+for (i in sequence(nrow(um_linearity))) {
+  tibble <- um_linearity[i,]$data[[1]]
+  tibble <- tibble |>
+    mutate(rownames = colnames(tibble)) |>
+    column_to_rownames(var = 'rownames')
+   um_linearity[i,]$dci <- dci(tibble)
+}
+
+um_ttest <- pairwise.t.test(um_linearity$dci, um_linearity$strain)
+
+
+
+um_h_plot <- ggplot(um_linearity, aes(y = dci, x = strain)) +
+  geom_boxplot() +
+  labs(title = 'Urine Marking') +
+  coord_cartesian(ylim = c(0.2,1))
+
+um_h_density <- ggplot(um_linearity, aes(x = dci, fill = strain)) +
+  geom_density(alpha = 0.3) +
+  labs(title = 'Urine Marking') 
+
+um_ttest
+
+```
+
+## Including Plots
+```{r}
+rc <- readxl::read_excel("C:/Users/megha/Documents/GitHub/pose_tracking_repo/results/tube_test_analysis/linearity_matrices.xlsx", sheet = "RC")
+
+rc_linearity <- rc |>
+  rowwise() |>
+  mutate(pilot = as_factor(unlist(strsplit(`...1`, "\\."))[1]),
+         cage = as_factor(unlist(strsplit(`...1`, "\\."))[2]),
+         strain = case_when((pilot == 1 ) & ((cage == 1) | (cage == 2)) ~ "C57",
+                            (pilot == 1 ) & ((cage == 3) | (cage == 4)) ~ "CD1",
+                            (pilot !=  1) & ((cage == 1) | (cage == 2) | (cage == 3)) ~ "C57",
+                            (pilot !=  1) & ((cage == 4) | (cage == 5) | (cage == 6)) ~ "CD1"
+                            )) |>
+  column_to_rownames(var = '...1') |>
+  group_by(strain, pilot, cage) |>
+  nest() |>
+  mutate(dci = 0)
+
+
+for (i in sequence(nrow(rc_linearity))) {
+  tibble <- rc_linearity[i,]$data[[1]]
+  tibble <- tibble |>
+    mutate(rownames = colnames(tibble)) |>
+    column_to_rownames(var = 'rownames')
+  rc_linearity[i,]$dci<- dci(tibble)
+}
+
+
+
+rc_h_plot <- ggplot(rc_linearity, aes(y = dci, x = strain)) +
+  geom_boxplot() +
+  labs(title = 'Reward Competition') +
+  coord_cartesian(ylim = c(0.2,1))
+
+rc_h_density <- ggplot(rc_linearity, aes(x = dci, fill = strain)) +
+  geom_density(alpha = 0.3) +
+  labs(title = 'Reward Competition')
+
+
+rc_ttest <- pairwise.t.test(rc_linearity$dci, rc_linearity$strain)
+
+rc_ttest
+
+```
+
+You can also embed plots, for example:
+```{r}
+tt <- readxl::read_excel("C:/Users/megha/Documents/GitHub/pose_tracking_repo/results/tube_test_analysis/linearity_matrices.xlsx", sheet = "TT")
+
+tt_linearity <- tt |>
+  rowwise() |>
+  mutate(pilot = as_factor(unlist(strsplit(`...1`, "\\."))[1]),
+         cage = as_factor(unlist(strsplit(`...1`, "\\."))[2]),
+         strain = case_when((pilot == 1 ) & ((cage == 1) | (cage == 2)) ~ "C57",
+                            (pilot == 1 ) & ((cage == 3) | (cage == 4)) ~ "CD1",
+                            (pilot !=  1) & ((cage == 1) | (cage == 2) | (cage == 3)) ~ "C57",
+                            (pilot !=  1) & ((cage == 4) | (cage == 5) | (cage == 6)) ~ "CD1"
+                            )) |>
+  column_to_rownames(var = '...1') |>
+  group_by(strain, pilot, cage) |>
+  nest() |>
+  mutate(dci = 0)
+
+  
+for (i in sequence(nrow(tt_linearity))) {
+  tibble <- tt_linearity[i,]$data[[1]]
+  tibble <- tibble |>
+    mutate(rownames = colnames(tibble)) |>
+    column_to_rownames(var = 'rownames')
+  tt_linearity[i,]$dci <- dci(tibble)
+}
+
+
+tt_h_plot <- ggplot(tt_linearity, aes(y = dci, x = strain)) +
+  geom_boxplot() +
+  labs(title = 'Tube Test') +
+  coord_cartesian(ylim = c(0.2,1))
+
+
+tt_h_density <- ggplot(tt_linearity, aes(x = dci, fill = strain)) +
+  geom_density(alpha = 0.3) +
+  labs(title = 'Tube Test')
+
+tt_ttest <- pairwise.t.test(tt_linearity$dci, tt_linearity$strain)
+
+tt_ttest
+tt_ttest$statistic
+```
+
+```{r}
+hco <- readxl::read_excel("C:/Users/megha/Documents/GitHub/pose_tracking_repo/results/tube_test_analysis/linearity_matrices.xlsx", sheet = "HCO")
+
+hco_linearity <- hco |>
+  rowwise() |>
+  mutate(pilot = as_factor(unlist(strsplit(`...1`, "\\."))[1]),
+         cage = as_factor(unlist(strsplit(`...1`, "\\."))[2]),
+         strain = case_when((pilot == 1 ) & ((cage == 1) | (cage == 2)) ~ "C57",
+                            (pilot == 1 ) & ((cage == 3) | (cage == 4)) ~ "CD1",
+                            (pilot !=  1) & ((cage == 1) | (cage == 2) | (cage == 3)) ~ "C57",
+                            (pilot !=  1) & ((cage == 4) | (cage == 5) | (cage == 6)) ~ "CD1"
+                            )) |>
+  column_to_rownames(var = '...1') |>
+  group_by(strain, pilot, cage) |>
+  nest() |>
+  mutate(dci = 0)
+
+  
+for (i in sequence(nrow(hco_linearity))) {
+  tibble <- hco_linearity[i,]$data[[1]]
+  tibble <- tibble |>
+    mutate(rownames = colnames(tibble)) |>
+    column_to_rownames(var = 'rownames')
+  hco_linearity[i,]$dci <- dci(tibble)
+}
+
+
+
+
+hco_h_plot <- ggplot(hco_linearity, aes(y = dci, x = strain)) +
+  geom_boxplot() +
+  labs(title = 'Agonistic Behavior') +
+  coord_cartesian(ylim = c(0.2,1))
+
+hco_h_density <- ggplot(hco_linearity, aes(x = dci, fill = strain)) +
+  geom_density(alpha = 0.3) +
+  labs(title = 'Agonistic Behavior')
+
+
+hco_ttest <- pairwise.t.test(hco_linearity$dci, hco_linearity$strain)
+hco_ttest
+hco_ttest$statistic
+hco_ttest$parameter
+```
+
+
+```{r}
+p.adjust(c(.7,.24,1,.13), method = "holm", n = 4)
+```
+
+```{r}
+
+(hco_h_plot + tt_h_plot) / (rc_h_plot + um_h_plot) 
+(hco_h_density + tt_h_density) / (rc_h_density +um_h_density)
+
+
+```
+```{r}
+hco_linearity <- rename(hco_linearity, hco_dci = dci) |>
+  select(-data)
+
+um_linearity <-rename(um_linearity, um_dci = dci) |>
+  select(-data)
+
+tt_linearity <- rename(tt_linearity, tt_dci = dci) |>
+  select(-data)
+
+rc_linearity <- rename(rc_linearity, rc_dci = dci) |>
+  select(-data)
+
+rc_linearity
+```
+```{r}
+
+
+linearity <- um_linearity |> 
+  ungroup() |>
+  mutate(rc_dci = rc_linearity$rc_dci) |>
+  ungroup() |>
+  mutate(tt_dci = tt_linearity$tt_dci) |>
+  ungroup() |>
+  full_join(hco_linearity)
+
+#tt_linearity, rc_linearity)
+
+linearity
+
+openxlsx::write.xlsx(linearity, file = "linearity.xlsx")
+
+```
+
+
+
+
+
+```{r pressure, echo=FALSE}
+
+pilot1_cage1 <- um |> 
+  slice(1:4) |>
+  column_to_rownames(var = '...1')
+
+pilot1_cage1
+
+results <- dci(pilot1_cage1)
+
+results_triangle <- ttri(pilot1_cage1)
+
+results_triangle
+
+
+get_wl_matrix(randomtourney(8))
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+
+bonobos
+
+
+```
+
